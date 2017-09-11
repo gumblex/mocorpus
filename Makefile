@@ -3,6 +3,9 @@ A2_MAXCONPERSRV=10
 A2_SPLITCON=8
 A2_MINSPLITSZ=1M
 
+MAKE_PID := $(shell echo $$PPID)
+JOB_FLAG := $(filter -j%, $(subst -j ,-j,$(shell ps T | grep "^\s*$(MAKE_PID).*$(MAKE)")))
+
 .PHONY: clean prunedebs
 
 mocorpus.db: locale/.done
@@ -25,8 +28,8 @@ debs/.done: packages.txt
 
 locale/.done: debs/.done | prunedebs
 	find debs/ -type f -name '*.deb' | \
-		parallel 'dpkg --fsys-tarfile {} | \
-			tar xf - --strip-components=3 ./usr/share/locale' && \
+		parallel $(JOB_FLAG) 'echo {}; dpkg --fsys-tarfile {} | \
+			tar xf - --strip-components=3 ./usr/share/locale' ; \
 	touch locale/.done
 
 prunedebs:
